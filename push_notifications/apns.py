@@ -14,6 +14,7 @@ from apns2 import payload as apns2_payload
 from . import models
 from .conf import get_manager
 from .exceptions import NotificationError
+from .settings import PUSH_NOTIFICATIONS_SETTINGS as SETTINGS
 
 
 class APNSError(NotificationError):
@@ -43,11 +44,21 @@ def _apns_create_socket(creds=None, application_id=None):
 			# algorithm. Neither of those settings are exposed in the
 			# settings API at the moment.
 			creds = creds or apns2_credentials.TokenCredentials(keyPath, keyId, teamId)
-	client = apns2_client.APNsClient(
-		creds,
-		use_sandbox=get_manager().get_apns_use_sandbox(application_id),
-		use_alternative_port=get_manager().get_apns_use_alternative_port(application_id)
-	)
+	if SETTINGS["PROXY_HOST"] != "":
+		client = apns2_client.APNsClient(
+			creds,
+			use_sandbox=get_manager().get_apns_use_sandbox(application_id),
+			use_alternative_port=get_manager().get_apns_use_alternative_port(application_id),
+			proxy_host=SETTINGS["PROXY_HOST"],
+			proxy_port=SETTINGS["PROXY_PORT"]
+		)
+	else:
+		client = apns2_client.APNsClient(
+			creds,
+			use_sandbox=get_manager().get_apns_use_sandbox(application_id),
+			use_alternative_port=get_manager().get_apns_use_alternative_port(application_id)
+		)
+
 	client.connect()
 	return client
 
